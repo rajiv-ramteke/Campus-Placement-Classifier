@@ -7,11 +7,14 @@ import json
 st.set_page_config(page_title="Placement Predictor", layout="centered")
 
 # ---------------- LOAD FILES ----------------
-model = joblib.load("model.pkl")
-scaler = joblib.load("scaler.pkl")
-
-with open("columns.json") as f:
-    model_columns = json.load(f)
+try:
+    model = joblib.load("model.pkl")
+    scaler = joblib.load("scaler.pkl")
+    with open("columns.json") as f:
+        model_columns = json.load(f)
+except Exception as e:
+    st.error("Model files not found or corrupted. Please check model.pkl, scaler.pkl, columns.json")
+    st.stop()
 
 # ---------------- LOGIN ----------------
 users = {"Rajiv": "2003"}
@@ -33,7 +36,7 @@ def login():
 
 # ---------------- MAIN APP ----------------
 def app():
-    st.title("🎓CAMPUS PLACEMENT PREDICTOR")
+    st.title("🎓 CAMPUS PLACEMENT PREDICTOR")
     st.caption("💼 Build Skills Today For Better Tomorrow")
 
     if st.sidebar.button("Logout"):
@@ -79,11 +82,11 @@ def app():
             else:
                 st.error(f"❌ Not Placed (Confidence: {(1-prob)*100:.2f}%)")
 
-            # ---------------- PROBABILITY BAR ----------------
+            # Probability
             st.progress(int(prob * 100))
             st.write(f"Placement Probability: {prob*100:.2f}%")
 
-            # ---------------- REQUIREMENTS CHECK ----------------
+            # ---------------- REQUIREMENTS ----------------
             st.subheader("📌 Placement Requirements Analysis")
 
             suggestions = []
@@ -107,7 +110,7 @@ def app():
                 for s in suggestions:
                     st.warning(s)
 
-            # ---------------- PERFORMANCE SCORE ----------------
+            # ---------------- PERFORMANCE ----------------
             st.subheader("📈 Student Performance Score")
 
             score = (ssc_p + hsc_p + degree_p + etest_p + mba_p) / 5
@@ -120,17 +123,27 @@ def app():
             else:
                 st.warning("Needs Improvement ⚠️")
 
-            # ---------------- SKILLS ----------------
-            st.subheader("💡 Skills Required")
+            # ---------------- SKILLS (SMART) ----------------
+            st.subheader("💡 Skills Recommendation")
 
-            skills = [
-                "Communication Skills",
-                "Aptitude & Logical Reasoning",
-                "Programming / Technical Skills",
-                "Problem Solving",
-                "Teamwork & Confidence",
-                "Internship Experience"
-            ]
+            if result[0] == 1:
+                st.success("You already have good skills 👍 Focus on advanced topics:")
+                skills = [
+                    "Advanced Programming (DSA)",
+                    "System Design Basics",
+                    "Mock Interviews",
+                    "Open Source Contributions",
+                    "Leadership & Communication"
+                ]
+            else:
+                st.warning("You need to improve these skills to increase placement chances:")
+                skills = [
+                    "Basic Programming (Python/Java)",
+                    "Aptitude & Logical Reasoning",
+                    "Mini Projects",
+                    "Internship Experience",
+                    "Communication Skills"
+                ]
 
             for skill in skills:
                 st.write("✔", skill)
@@ -148,11 +161,8 @@ def app():
 
             scaled = scaler.transform(df_encoded)
 
-            pred = model.predict(scaled)
-            prob = model.predict_proba(scaled)[:, 1]
-
-            df["Prediction"] = pred
-            df["Confidence"] = prob
+            df["Prediction"] = model.predict(scaled)
+            df["Confidence"] = model.predict_proba(scaled)[:, 1]
 
             st.write(df)
 
@@ -168,7 +178,7 @@ def app():
         df = pd.read_csv("Placement_Data_Full_Class.csv")
 
         st.subheader("Placement Distribution")
-        st.bar_chart(df["status"].map({'Placed':1,'Not Placed':0}).value_counts())
+        st.bar_chart(df["status"].map({'Placed': 1, 'Not Placed': 0}).value_counts())
 
         st.subheader("SSC Trend")
         st.line_chart(df["ssc_p"])
