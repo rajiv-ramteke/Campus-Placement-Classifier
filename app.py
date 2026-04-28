@@ -36,8 +36,15 @@ def login():
 
 # ---------------- MAIN APP ----------------
 def app():
-    st.title("🎓 CAMPUS PLACEMENT PREDICTOR")
-    st.caption("💼 Build Skills Today For Better Tomorrow")
+    st.markdown(
+        "<h1 style='text-align: center; color:#4CAF50;'>🎓 CAMPUS PLACEMENT PREDICTOR</h1>",
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        "<p style='text-align: center; font-size:18px; color:gray;'>💼 Build Skills Today For Better Tomorrow</p>",
+        unsafe_allow_html=True
+    )
 
     if st.sidebar.button("Logout"):
         st.session_state.login = False
@@ -46,7 +53,6 @@ def app():
         "Menu",
         ["Single Prediction", "Batch CSV", "Dashboard"]
     )
-
     # ---------------- SINGLE PREDICTION ----------------
     if menu == "Single Prediction":
 
