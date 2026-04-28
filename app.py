@@ -14,7 +14,7 @@ with open("columns.json") as f:
     model_columns = json.load(f)
 
 # ---------------- LOGIN ----------------
-users = {"admin": "1234"}
+users = {"Rajiv": "2003"}
 
 if "login" not in st.session_state:
     st.session_state.login = False
