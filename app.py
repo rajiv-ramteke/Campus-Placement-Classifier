@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import joblib
 import json
 
@@ -36,7 +35,6 @@ def login():
 def app():
     st.title("🎓 AI-Based Placement Prediction System")
 
-    # Logout
     if st.sidebar.button("Logout"):
         st.session_state.login = False
 
@@ -45,9 +43,8 @@ def app():
         ["Single Prediction", "Batch CSV", "Dashboard"]
     )
 
-    # ---------------- SINGLE ----------------
+    # ---------------- SINGLE PREDICTION ----------------
     if menu == "Single Prediction":
-        st.subheader("Enter Student Details")
 
         gender = st.selectbox("Gender", ["M", "F"])
         ssc_p = st.slider("SSC %", 0.0, 100.0)
@@ -57,7 +54,6 @@ def app():
         etest_p = st.slider("E-test %", 0.0, 100.0)
         mba_p = st.slider("MBA %", 0.0, 100.0)
 
-        # Input
         data = {
             "ssc_p": ssc_p,
             "hsc_p": hsc_p,
@@ -70,21 +66,76 @@ def app():
 
         df = pd.DataFrame([data])
         df = df.reindex(columns=model_columns, fill_value=0)
-
         scaled = scaler.transform(df)
 
         if st.button("Predict"):
             result = model.predict(scaled)
             prob = model.predict_proba(scaled)[0][1]
 
+            # Result
             if result[0] == 1:
                 st.success(f"🎉 Placed (Confidence: {prob*100:.2f}%)")
             else:
                 st.error(f"❌ Not Placed (Confidence: {(1-prob)*100:.2f}%)")
 
+            # ---------------- PROBABILITY BAR ----------------
+            st.progress(int(prob * 100))
+            st.write(f"Placement Probability: {prob*100:.2f}%")
+
+            # ---------------- REQUIREMENTS CHECK ----------------
+            st.subheader("📌 Placement Requirements Analysis")
+
+            suggestions = []
+
+            if ssc_p < 60:
+                suggestions.append("Improve SSC > 60%")
+            if hsc_p < 60:
+                suggestions.append("Improve HSC > 60%")
+            if degree_p < 65:
+                suggestions.append("Increase Degree > 65%")
+            if etest_p < 70:
+                suggestions.append("Improve Aptitude > 70%")
+            if mba_p < 65:
+                suggestions.append("Improve MBA > 65%")
+            if workex == "No":
+                suggestions.append("Gain internship/work experience")
+
+            if len(suggestions) == 0:
+                st.success("✅ You meet most placement requirements!")
+            else:
+                for s in suggestions:
+                    st.warning(s)
+
+            # ---------------- PERFORMANCE SCORE ----------------
+            st.subheader("📈 Student Performance Score")
+
+            score = (ssc_p + hsc_p + degree_p + etest_p + mba_p) / 5
+            st.metric("Overall Score", f"{score:.2f}/100")
+
+            if score > 75:
+                st.success("Excellent Profile 🔥")
+            elif score > 60:
+                st.info("Good Profile 👍")
+            else:
+                st.warning("Needs Improvement ⚠️")
+
+            # ---------------- SKILLS ----------------
+            st.subheader("💡 Skills Required")
+
+            skills = [
+                "Communication Skills",
+                "Aptitude & Logical Reasoning",
+                "Programming / Technical Skills",
+                "Problem Solving",
+                "Teamwork & Confidence",
+                "Internship Experience"
+            ]
+
+            for skill in skills:
+                st.write("✔", skill)
+
     # ---------------- CSV ----------------
     elif menu == "Batch CSV":
-        st.subheader("Upload CSV for Prediction")
 
         file = st.file_uploader("Upload CSV", type=["csv"])
 
@@ -102,15 +153,8 @@ def app():
             df["Prediction"] = pred
             df["Confidence"] = prob
 
-            st.write("Prediction Results", df)
+            st.write(df)
 
-            # Summary
-            st.subheader("Summary")
-            st.write("Total Students:", len(df))
-            st.write("Placed:", (df["Prediction"] == 1).sum())
-            st.write("Not Placed:", (df["Prediction"] == 0).sum())
-
-            # Download
             st.download_button(
                 "Download Results",
                 df.to_csv(index=False),
@@ -119,26 +163,14 @@ def app():
 
     # ---------------- DASHBOARD ----------------
     elif menu == "Dashboard":
-        st.subheader("📊 Data Dashboard")
 
         df = pd.read_csv("Placement_Data_Full_Class.csv")
 
-        # Placement chart
-        st.write("Placement Distribution")
-        st.bar_chart(df["status"].map({'Placed': 1, 'Not Placed': 0}).value_counts())
+        st.subheader("Placement Distribution")
+        st.bar_chart(df["status"].map({'Placed':1,'Not Placed':0}).value_counts())
 
-        # SSC graph
-        st.write("SSC Percentage Trend")
+        st.subheader("SSC Trend")
         st.line_chart(df["ssc_p"])
-
-        # Insights
-        st.subheader("Insights")
-
-        placed_avg = df[df["status"] == "Placed"]["ssc_p"].mean()
-        not_placed_avg = df[df["status"] == "Not Placed"]["ssc_p"].mean()
-
-        st.write(f"Average SSC (Placed): {placed_avg:.2f}")
-        st.write(f"Average SSC (Not Placed): {not_placed_avg:.2f}")
 
 # ---------------- RUN ----------------
 if st.session_state.login:
