@@ -33,7 +33,8 @@ def login():
 
 # ---------------- MAIN APP ----------------
 def app():
-    st.title("🎓 AI-Based Placement Prediction System")
+    st.title("🎓Campus Placement Predictor System")
+    st.caption("💼 Build skills today for a better tomorrow.")
 
     if st.sidebar.button("Logout"):
         st.session_state.login = False
