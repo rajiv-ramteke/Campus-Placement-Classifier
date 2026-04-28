@@ -3,9 +3,10 @@ import pandas as pd
 import joblib
 import json
 
-# ---------------- DARK UI ----------------
+# ---------------- CONFIG ----------------
 st.set_page_config(page_title="Placement Predictor", layout="centered")
 
+# ---------------- DARK UI ----------------
 st.markdown("""
 <style>
 body {background-color: #0e1117; color: white;}
@@ -86,7 +87,6 @@ def app():
             else:
                 st.error(f"❌ Not Placed (Confidence: {(1-prob)*100:.2f}%)")
 
-            # Probability
             st.progress(int(prob * 100))
 
             # Suggestions
@@ -146,15 +146,18 @@ def app():
         st.subheader("SSC Trend")
         st.line_chart(df["ssc_p"])
 
-        # Feature Importance
+        # Feature Importance (fixed)
         st.subheader("Top Features")
         try:
-            import pandas as pd
-            imp = model.feature_importances_
-            feat = pd.DataFrame({"Feature": model_columns, "Importance": imp})
-            st.bar_chart(feat.set_index("Feature").sort_values(by="Importance"))
+            importance = model.feature_importances_
+            feat_df = pd.DataFrame({
+                "Feature": model_columns,
+                "Importance": importance
+            }).sort_values(by="Importance", ascending=False)
+
+            st.bar_chart(feat_df.set_index("Feature"))
         except:
-            st.warning("Not available")
+            st.warning("Feature importance not available")
 
     # ---------------- WHAT IF ----------------
     elif menu == "What If Simulator":
